@@ -1,24 +1,93 @@
-'use strict';
+"use strict";
 
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const jwt = require('jsonwebtoken');
-const jwksClient = require('jwks-rsa');
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
 
-const app = express();
-app.use(cors());
+const server = express();
+server.use(cors());
 
-const PORT = process.env.PORT || 3001;
+const mongoose = require("mongoose");
+mongoose.connect("mongodb://localhost:27017/books", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
-app.get('/test', (request, response) => {
+const booksSchema = new mongoose.Schema({
+  name: String,
+  description: String,
+  status: String,
+  img: String,
+});
 
-  // TODO: 
-  // STEP 1: get the jwt from the headers
-  // STEP 2. use the jsonwebtoken library to verify that it is a valid jwt
-  // jsonwebtoken dock - https://www.npmjs.com/package/jsonwebtoken
-  // STEP 3: to prove that everything is working correctly, send the opened jwt back to the front-end
+const UserSchema = new mongoose.Schema({
+  email: String,
+  books: [booksSchema],
+});
 
-})
+const userModel = mongoose.model("user", UserSchema);
 
-app.listen(PORT, () => console.log(`listening on ${PORT}`));
+function seedUserCollection() {
+  const omar = new userModel({
+    email: "omx302@gmail.com",
+    books: [
+      {
+        name: "The Growth Mindset",
+        description:
+          "Dweck coined the terms fixed mindset and growth mindset to describe the underlying beliefs people have about learning and intelligence. When students believe they can get smarter, they understand that effort makes them stronger. Therefore they put in extra time and effort, and that leads to higher achievement.",
+        status: "FAVORITE FIVE",
+        img: "https://m.media-amazon.com/images/I/61bDwfLudLL._AC_UL640_QL65_.jpg",
+      },
+      {
+        name: "The Momnt of Lift",
+        description:
+          "Melinda Gates shares her how her exposure to the poor around the world has established the objectives of her foundation.",
+        status: "RECOMMENDED TO ME",
+        img: "https://m.media-amazon.com/images/I/71LESEKiazL._AC_UY436_QL65_.jpg",
+      },
+    ],
+  });
+  const razan = new userModel({
+    email: "r.alquran@ltuc.com",
+    books: [
+      {
+        name: "The Growth Mindset",
+        description:
+          "Dweck coined the terms fixed mindset and growth mindset to describe the underlying beliefs people have about learning and intelligence. When students believe they can get smarter, they understand that effort makes them stronger. Therefore they put in extra time and effort, and that leads to higher achievement.",
+        status: "FAVORITE FIVE",
+        img: "https://m.media-amazon.com/images/I/61bDwfLudLL._AC_UL640_QL65_.jpg",
+      },
+      {
+        name: "The Momnt of Lift",
+        description:
+          "Melinda Gates shares her how her exposure to the poor around the world has established the objectives of her foundation.",
+        status: "RECOMMENDED TO ME",
+        img: "https://m.media-amazon.com/images/I/71LESEKiazL._AC_UY436_QL65_.jpg",
+      },
+    ],
+  });
+
+  omar.save();
+  razan.save();
+}
+// seedUserCollection();
+
+server.get("/books", getUserBooks);
+
+function getUserBooks(req, res) {
+  let userEmail = req.query.email;
+  userModel.find({ email: userEmail }, function (error, userData) {
+    if (error) {
+      res.send("did not work");
+    } else {
+      res.send(userData[0].books);
+    }
+  });
+}
+const PORT = process.env.PORT || 3002;
+
+server.get("/test", (request, response) => {
+  response.send("OK");
+});
+
+server.listen(PORT, () => console.log(`listening on ${PORT}`));

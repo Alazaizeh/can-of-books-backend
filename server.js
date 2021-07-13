@@ -3,7 +3,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-
+const userModel = require("./Schema");
 const server = express();
 server.use(cors());
 
@@ -12,20 +12,6 @@ mongoose.connect("mongodb://localhost:27017/books", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
-
-const booksSchema = new mongoose.Schema({
-  name: String,
-  description: String,
-  status: String,
-  img: String,
-});
-
-const UserSchema = new mongoose.Schema({
-  email: String,
-  books: [booksSchema],
-});
-
-const userModel = mongoose.model("user", UserSchema);
 
 function seedUserCollection() {
   const omar = new userModel({

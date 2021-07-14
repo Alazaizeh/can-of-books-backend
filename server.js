@@ -10,10 +10,13 @@ server.use(cors());
 server.use(express.json());
 
 const mongoose = require("mongoose");
-mongoose.connect("mongodb://localhost:27017/books", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+mongoose.connect(
+  `mongodb://${process.env.DB_CONF}@cluster0-shard-00-00.uvjqt.mongodb.net:27017,cluster0-shard-00-01.uvjqt.mongodb.net:27017,cluster0-shard-00-02.uvjqt.mongodb.net:27017/myFirstDatabase?ssl=true&replicaSet=atlas-h1qilz-shard-0&authSource=admin&retryWrites=true&w=majority`,
+  {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  }
+);
 
 function seedUserCollection() {
   const omar = new userModel({
@@ -103,8 +106,8 @@ server.delete("/deleteBook/:bookId", deleteBookHandler);
 
 function deleteBookHandler(req, res) {
   let index = Number(req.params.bookId);
-  console.log(index);
-  console.log(req.query.email);
+  // console.log(index);
+  // console.log(req.query.email);
 
   userModel.find({ email: req.query.email }, (error, ownerData) => {
     if (error) {
@@ -112,9 +115,33 @@ function deleteBookHandler(req, res) {
     } else {
       console.log("before deleting", ownerData[0].books);
 
-      let newCatsArr = ownerData[0].books.filter((book, idx) => idx !== index);
-      ownerData[0].books = newCatsArr;
+      let newBooksArr = ownerData[0].books.filter((book, idx) => idx !== index);
+      ownerData[0].books = newBooksArr;
       console.log("after deleting", ownerData[0].books);
+      ownerData[0].save();
+      res.send(ownerData[0].books);
+    }
+  });
+}
+
+server.post("/updateBook/:bookId", updateeBookHandler);
+
+function updateeBookHandler(req, res) {
+  let index = Number(req.params.bookId);
+  console.log(req);
+  let { name, description, status, img } = req.body;
+
+  userModel.find({ email: req.query.email }, (error, ownerData) => {
+    if (error) {
+      res.send("cant find user");
+    } else {
+      ownerData[0].books.splice(index, 1, {
+        name: name,
+        description: description,
+        status: status,
+        img: img,
+      });
+      // console.log("after adding", ownerData[0]);
       ownerData[0].save();
       res.send(ownerData[0].books);
     }
